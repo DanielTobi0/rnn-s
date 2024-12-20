@@ -1,7 +1,6 @@
 import torch
 from typing import Dict, List, Tuple
 from tqdm import tqdm
-from utils import device
 
 
 def accuracy_fn(y_true, y_pred):
