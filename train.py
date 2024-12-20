@@ -1,13 +1,12 @@
-import argparse
 import torch
 import data_setup, engine, model, utils
 
 
 INPUT_SIZE = 5
-OUTPUT_SIZE = 1
+OUTPUT_SIZE = 2
 NUM_EPOCHS = 5
 BATCH_SIZE = 16
-HIDDEN_UNITS = 10
+HIDDEN_UNITS = 64
 LEARNING_RATE = 0.01
 
 

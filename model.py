@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
-
+from utils import device
 
 class VanillaRNN(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -26,17 +26,16 @@ class VanillaRNN(nn.Module):
         :return outputs: List of output vectors
                       h: Final hidden state
         """
+        batch_size = inputs.size(0)
+
         if h_prev is None:
-            h_prev = torch.zeros(self.hidden_size, self.output_size)
+            h_prev = torch.zeros(batch_size, self.hidden_size).to(inputs.device)
 
         h = h_prev
-        outputs = []
 
-        for x in inputs:
-            h = torch.tanh(torch.matmul(self.Wxh, x) + torch.matmul(self.Whh, h) + self.bh)
-            y = torch.matmul(self.Why, h) + self.by
-            outputs.append(y)
-        return outputs, h
+        h = torch.tanh(torch.matmul(inputs, self.Wxh.t()) + torch.matmul(h, self.Whh.t()) + self.bh.t())
+        y = torch.matmul(h, self.Why.t() + self.by.t())
+        return y
 
 
 if __name__ == '__main__':

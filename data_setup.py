@@ -15,7 +15,7 @@ class CustomDataset(Dataset):
         x = self.X.iloc[index]
         y = self.target.iloc[index]
 
-        return torch.tensor(x, dtype=torch.float32).to(device), torch.tensor(y, dtype=torch.long)
+        return torch.tensor(x, dtype=torch.float32).to(device), torch.tensor(y, dtype=torch.long).to(device)
 
     def __len__(self):
         return len(self.df)
