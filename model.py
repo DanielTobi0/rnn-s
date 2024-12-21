@@ -1,10 +1,20 @@
 import torch
 import torch.nn as nn
+from utils import device
 
 
-class VanillaRNN(nn.Module):
+class TabularVanillaRNN(nn.Module):
+    """
+    simple vanilla rnn.
+
+    self.Wxh : input-to-hidden
+    self.Whh: hidden-to-hidden
+    self.Why: hidden-to-output
+    self.bh: hidden bias
+    self.by: output bias
+    """
     def __init__(self, input_size, hidden_size, output_size):
-        super(VanillaRNN, self).__init__()
+        super(TabularVanillaRNN, self).__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.output_size = output_size
@@ -13,6 +23,7 @@ class VanillaRNN(nn.Module):
         self.Whh = nn.Parameter(torch.randn(hidden_size, hidden_size) * 0.01)
         self.Why = nn.Parameter(torch.randn(output_size, hidden_size) * 0.01)
 
+        # bias
         self.bh = nn.Parameter(torch.zeros(hidden_size, 1))
         self.by = nn.Parameter(torch.zeros(output_size, 1))
 
@@ -37,18 +48,59 @@ class VanillaRNN(nn.Module):
         return y
 
 
-if __name__ == '__main__':
-    input_size = 2
-    hidden_size = 10
-    output_size = 1
-    time_steps = 4
+class TabularVanilla2(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size, num_layers, batch_size):
+        super(TabularVanilla2, self).__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.batch_size = batch_size
+        self.output_size = output_size
 
-    rnn = VanillaRNN(input_size, hidden_size, output_size)
-    inputs = [torch.randn(input_size, 1) for _ in range(time_steps)]
-    h_prev = torch.zeros(hidden_size, 1)
-    outputs, h_final = rnn(inputs, h_prev)
+        self.rnn = nn.RNN(self.input_size, self.hidden_size, self.num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, output_size)
 
-    for t, y in enumerate(outputs):
-        print(f'Time step {t}: {y.flatten()}')
-    print('\nFinal hidden state:')
-    print(h_final.flatten())
+    def forward(self, x):
+        x = x.unsqueeze(1)
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device)
+        out, _ = self.rnn(x, h0)
+        out = self.fc(out[:, -1, :])
+        return out
+
+
+class TabularGRU(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size, num_layers, batch_size, dropout, bidirectional=True):
+        super(TabularGRU, self).__init__()
+
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.batch_size = batch_size
+        self.output_size = output_size
+        self.dropout = dropout
+        self.bidirectional = bidirectional
+
+        self.gru = nn.GRU(
+            input_size=self.input_size,
+            hidden_size=self.hidden_size,
+            num_layers=self.num_layers,
+            dropout=self.dropout,
+            batch_first=True,
+            bidirectional=True
+        )
+
+        self.num_directions = 2 if self.bidirectional else 1
+        self.fc = nn.Linear(hidden_size * self.num_directions, self.output_size)
+
+    def forward(self, x):
+        x = x.unsqueeze(1)
+        h0 = torch.zeros(
+            self.num_layers * self.num_directions,
+            x.size(0),
+            self.hidden_size
+        ).to(device)
+
+        out, _ = self.gru(x, h0)
+        out = self.fc(out[:, -1, :])
+        return out
+
