@@ -1,7 +1,7 @@
 import torch
 from data_setup import dataloaders
 from engine import train
-from model import TabularVanillaRNN, TabularVanilla2, TabularGRU
+from model import TabularVanillaRNN, TabularVanilla2, TabularGRU, TabularLSTM
 from utils import device
 
 INPUT_SIZE = 5
@@ -19,7 +19,7 @@ train_dataloader, test_dataloader = dataloaders(
     batch_size=BATCH_SIZE
 )
 
-model = TabularGRU(
+model = TabularLSTM(
     input_size=INPUT_SIZE,
     hidden_size=HIDDEN_UNITS,
     output_size=OUTPUT_SIZE,
